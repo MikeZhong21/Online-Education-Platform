@@ -1,20 +1,31 @@
 package com.tianji.learning.service.impl;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tianji.api.client.course.CourseClient;
 import com.tianji.api.dto.course.CourseSimpleInfoDTO;
+import com.tianji.common.domain.dto.PageDTO;
+import com.tianji.common.domain.query.PageQuery;
+import com.tianji.common.exceptions.BadRequestException;
+import com.tianji.common.exceptions.BizIllegalException;
 import com.tianji.common.utils.CollUtils;
+import com.tianji.common.utils.UserContext;
 import com.tianji.learning.domain.po.LearningLesson;
+import com.tianji.learning.domain.vo.LearningLessonVO;
 import com.tianji.learning.mapper.LearningLessonMapper;
 import com.tianji.learning.service.ILearningLessonService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -60,5 +71,40 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
         }
         // 3.批量新增
         this.saveBatch(list);
+    }
+
+    @Override
+    public PageDTO<LearningLessonVO> queryMyLessons(PageQuery pageQuery) {
+        Long userID = UserContext.getUser();
+
+        Page<LearningLesson> page = this.lambdaQuery()
+                .eq(LearningLesson::getUserId, userID)
+                .page(pageQuery.toMpPage("latest_learn_time", false));
+        List<LearningLesson> records = page.getRecords();
+        if(CollUtils.isEmpty(records)){
+            return PageDTO.empty(page);
+        }
+
+        Set<Long> courseIds = records.stream().map(LearningLesson::getCourseId).collect(Collectors.toSet());
+        List<CourseSimpleInfoDTO> cinfos = courseClient.getSimpleInfoList(courseIds);
+        if(CollUtils.isEmpty(cinfos)){
+            throw new BizIllegalException("course not exist");
+        }
+
+        Map<Long, CourseSimpleInfoDTO> infoDTOMap = cinfos.stream().collect(Collectors.toMap(CourseSimpleInfoDTO::getId, c -> c));
+        List<LearningLessonVO> voList = new ArrayList<>();
+        for (LearningLesson record : records) {
+            LearningLessonVO lessonVO = new LearningLessonVO();
+            BeanUtils.copyProperties(record, lessonVO);
+            CourseSimpleInfoDTO infoDTO = infoDTOMap.get(record.getCourseId());
+            if(infoDTO!=null){
+                lessonVO.setCourseName(infoDTO.getName());
+                lessonVO.setCourseCoverUrl(infoDTO.getCoverUrl());
+                lessonVO.setSections(infoDTO.getSectionNum());
+            }
+            voList.add(lessonVO);
+        }
+
+        return PageDTO.of(page, voList);
     }
 }
