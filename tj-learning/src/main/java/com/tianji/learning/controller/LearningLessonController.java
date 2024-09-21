@@ -10,6 +10,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import org.springframework.web.bind.annotation.RestController;
@@ -42,5 +43,16 @@ public class LearningLessonController {
         return lessonService.queryMyCurrentLesson();
     }
 
+    @GetMapping("/{courseId}/valid")
+    @ApiOperation("check if user can study the course")
+    public Long isLessonValid(@PathVariable("courseId") Long courseId) {
+        return lessonService.isLessonValid(courseId);
+    }
+
+    @GetMapping("/{courseId}")
+    @ApiOperation("query course status of the user")
+    public LearningLessonVO queryLessonByCourseId(@PathVariable("courseId") Long courseId){
+        return  lessonService.queryLessonByCourseId(courseId);
+    }
 
 }

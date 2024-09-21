@@ -1,5 +1,6 @@
 package com.tianji.learning.service.impl;
 
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tianji.api.client.course.CatalogueClient;
 import com.tianji.api.client.course.CourseClient;
@@ -152,5 +153,43 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
             vo.setLatestSectionIndex(cataInfo.getCIndex());
         }
         return vo;
+    }
+
+    @Override
+    public Long isLessonValid(Long courseId) {
+        Long userId = UserContext.getUser();
+
+        LearningLesson lesson = this.lambdaQuery()
+                .eq(LearningLesson::getUserId, userId)
+                .eq(LearningLesson::getCourseId, courseId)
+                .one();
+        if(lesson==null){
+            return null;
+        }
+
+        LocalDateTime expireTime = lesson.getExpireTime();
+        LocalDateTime now = LocalDateTime.now();
+        if(now.isAfter(expireTime)){
+            return null;
+        }
+
+        return lesson.getId();
+    }
+
+    @Override
+    public LearningLessonVO queryLessonByCourseId(Long courseId) {
+        Long userId = UserContext.getUser();
+
+        LearningLesson lesson = this.lambdaQuery()
+                .eq(LearningLesson::getUserId, userId)
+                .eq(LearningLesson::getCourseId, courseId)
+                .one();
+        if(lesson==null){
+            return null;
+        }
+
+        LearningLessonVO lessonVO = new LearningLessonVO();
+        BeanUtils.copyProperties(lesson, lessonVO);
+        return lessonVO;
     }
 }
