@@ -169,7 +169,7 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
 
         LocalDateTime expireTime = lesson.getExpireTime();
         LocalDateTime now = LocalDateTime.now();
-        if(now.isAfter(expireTime)){
+        if(expireTime!=null && now.isAfter(expireTime)){
             return null;
         }
 
