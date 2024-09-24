@@ -140,10 +140,10 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
         vo.setCourseCoverUrl(cInfo.getCoverUrl());
         vo.setSections(cInfo.getSectionNum());
         // 5.统计课表中的课程数量 select count(1) from xxx where user_id = #{userId}
-        Long courseAmount = this.lambdaQuery()
+        Integer courseAmount = this.lambdaQuery()
                 .eq(LearningLesson::getUserId, userId)
                 .count();
-        vo.setCourseAmount(Math.toIntExact(courseAmount));
+        vo.setCourseAmount(courseAmount);
         // 6.查询小节信息
         List<CataSimpleInfoDTO> cataInfos =
                 catalogueClient.batchQueryCatalogue(CollUtils.singletonList(lesson.getLatestSectionId()));

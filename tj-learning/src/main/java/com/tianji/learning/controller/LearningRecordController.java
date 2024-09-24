@@ -2,16 +2,14 @@ package com.tianji.learning.controller;
 
 
 import com.tianji.api.dto.leanring.LearningLessonDTO;
+import com.tianji.learning.domain.dto.LearningRecordFormDTO;
 import com.tianji.learning.service.ILearningLessonService;
 import com.tianji.learning.service.ILearningRecordService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * <p>
@@ -33,5 +31,11 @@ public class LearningRecordController {
     @ApiOperation("query current user's learning progress of the corresponding course")
     public LearningLessonDTO queryLearningRecordByCourse(@PathVariable("courseId") Long courseId){
         return recordService.queryLearningRecordByCourse(courseId);
+    }
+
+    @PostMapping()
+    @ApiOperation("submit learning records")
+    public void addLearningRecord(@RequestBody @Validated LearningRecordFormDTO learningRecordFormDTO){
+        recordService.addLearningRecord(learningRecordFormDTO);
     }
 }
