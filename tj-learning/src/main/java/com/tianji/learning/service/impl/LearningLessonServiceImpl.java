@@ -1,6 +1,5 @@
 package com.tianji.learning.service.impl;
 
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tianji.api.client.course.CatalogueClient;
 import com.tianji.api.client.course.CourseClient;
@@ -11,11 +10,14 @@ import com.tianji.common.domain.dto.PageDTO;
 import com.tianji.common.domain.query.PageQuery;
 import com.tianji.common.exceptions.BadRequestException;
 import com.tianji.common.exceptions.BizIllegalException;
+import com.tianji.common.utils.AssertUtils;
 import com.tianji.common.utils.CollUtils;
 import com.tianji.common.utils.UserContext;
+import com.tianji.learning.domain.dto.LearningPlanDTO;
 import com.tianji.learning.domain.po.LearningLesson;
 import com.tianji.learning.domain.vo.LearningLessonVO;
 import com.tianji.learning.enums.LessonStatus;
+import com.tianji.learning.enums.PlanStatus;
 import com.tianji.learning.mapper.LearningLessonMapper;
 import com.tianji.learning.service.ILearningLessonService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -191,5 +193,25 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
         LearningLessonVO lessonVO = new LearningLessonVO();
         BeanUtils.copyProperties(lesson, lessonVO);
         return lessonVO;
+    }
+
+    @Override
+    public void createLearningPlan(LearningPlanDTO learningPlanDTO) {
+        // 1.获取当前登录的用户
+        Long userId = UserContext.getUser();
+        // 2.查询课表中的指定课程有关的数据
+        LearningLesson lesson = this.lambdaQuery()
+                .eq(LearningLesson::getUserId, userId)
+                .eq(LearningLesson::getCourseId, learningPlanDTO.getCourseId())
+                .one();
+        if(lesson==null){
+            throw new BizIllegalException("Course information not exist");
+        }
+        // 3.修改数据
+        this.lambdaUpdate()
+                .set(LearningLesson::getWeekFreq, learningPlanDTO.getFreq())
+                .set(LearningLesson::getPlanStatus, PlanStatus.PLAN_RUNNING)
+                .eq(LearningLesson::getId, lesson.getId())
+                .update();
     }
 }
