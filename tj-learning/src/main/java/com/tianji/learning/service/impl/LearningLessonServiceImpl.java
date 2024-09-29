@@ -1,7 +1,10 @@
 package com.tianji.learning.service.impl;
 
+<<<<<<< HEAD
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+=======
+>>>>>>> 499f842726ec189e68c9ab32fff5001dc8521e94
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tianji.api.client.course.CatalogueClient;
 import com.tianji.api.client.course.CourseClient;
@@ -224,6 +227,7 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
                 .eq(LearningLesson::getId, lesson.getId())
                 .update();
     }
+<<<<<<< HEAD
 
 
     @Override
@@ -318,4 +322,6 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
         learningPlanPageVO.setPages(page.getPages());
         return learningPlanPageVO;
     }
+=======
+>>>>>>> 499f842726ec189e68c9ab32fff5001dc8521e94
 }

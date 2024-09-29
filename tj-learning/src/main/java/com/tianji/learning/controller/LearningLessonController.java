@@ -61,10 +61,13 @@ public class LearningLessonController {
         lessonService.createLearningPlan(learningPlanDTO);
     }
 
+<<<<<<< HEAD
     @ApiOperation("query my learning plan")
     @GetMapping("/plans")
     public LearningPlanPageVO queryMyPlans(PageQuery query){
         return lessonService.queryMyPlans(query);
     }
 
+=======
+>>>>>>> 499f842726ec189e68c9ab32fff5001dc8521e94
 }
