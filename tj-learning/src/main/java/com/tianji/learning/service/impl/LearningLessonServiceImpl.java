@@ -1,10 +1,8 @@
 package com.tianji.learning.service.impl;
 
-<<<<<<< HEAD
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-=======
->>>>>>> 499f842726ec189e68c9ab32fff5001dc8521e94
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.tianji.api.client.course.CatalogueClient;
 import com.tianji.api.client.course.CourseClient;
@@ -63,6 +61,8 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
     private final CatalogueClient catalogueClient;
 
     private final LearningRecordMapper learningRecordMapper;
+
+    private final LearningLessonMapper lessonMapper;
 
     @Override
     @Transactional
@@ -209,6 +209,14 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
     }
 
     @Override
+    public void deleteCourseFromLesson(Long user, Long courseId) {
+        LambdaQueryWrapper<LearningLesson> lqw = new LambdaQueryWrapper<>();
+        lqw.eq(LearningLesson::getUserId, user);
+        lqw.eq(LearningLesson::getCourseId, courseId);
+        lessonMapper.delete(lqw);
+    }
+
+    @Override
     public void createLearningPlan(LearningPlanDTO learningPlanDTO) {
         // 1.获取当前登录的用户
         Long userId = UserContext.getUser();
@@ -227,7 +235,6 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
                 .eq(LearningLesson::getId, lesson.getId())
                 .update();
     }
-<<<<<<< HEAD
 
 
     @Override
@@ -322,6 +329,4 @@ public class LearningLessonServiceImpl extends ServiceImpl<LearningLessonMapper,
         learningPlanPageVO.setPages(page.getPages());
         return learningPlanPageVO;
     }
-=======
->>>>>>> 499f842726ec189e68c9ab32fff5001dc8521e94
 }

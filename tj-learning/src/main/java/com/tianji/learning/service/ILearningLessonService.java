@@ -32,9 +32,8 @@ public interface ILearningLessonService extends IService<LearningLesson> {
     LearningLessonVO queryLessonByCourseId(Long courseId);
 
     void createLearningPlan(LearningPlanDTO learningPlanDTO);
-<<<<<<< HEAD
 
     LearningPlanPageVO queryMyPlans(PageQuery query);
-=======
->>>>>>> 499f842726ec189e68c9ab32fff5001dc8521e94
+
+    void deleteCourseFromLesson(Long user, Long couseId);
 }
