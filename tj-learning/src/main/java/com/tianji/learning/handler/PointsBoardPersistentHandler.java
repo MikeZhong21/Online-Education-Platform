@@ -8,8 +8,11 @@ import com.tianji.learning.domain.po.PointsBoardSeason;
 import com.tianji.learning.service.IPointsBoardSeasonService;
 import com.tianji.learning.service.IPointsBoardService;
 import com.tianji.learning.utils.TableInfoContext;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.RequiredArgsConstructor;
+import org.aspectj.apache.bcel.generic.RET;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +30,8 @@ public class PointsBoardPersistentHandler {
     private final IPointsBoardSeasonService seasonService;
 
     private final IPointsBoardService pointsBoardService;
+
+    private  final RedisTemplate redisTemplate;
 
 //    @Scheduled(cron = "0 0 3 1 * ?")
     @XxlJob("createTableJob")
@@ -56,7 +61,9 @@ public class PointsBoardPersistentHandler {
         // 3.1.拼接KEY
         String key = RedisConstants.POINTS_BOARD_KEY_PREFIX + time.format(DateTimeFormatter.ofPattern("yyyyMM"));
         // 3.2.查询数据
-        int pageNo = 1;
+        int index = XxlJobHelper.getShardIndex();
+        int total = XxlJobHelper.getShardTotal();
+        int pageNo = index + 1;
         int pageSize = 1000;
         while (true) {
             List<PointsBoard> boardList = pointsBoardService.queryCurrentBoardList(key, pageNo, pageSize);
@@ -72,9 +79,19 @@ public class PointsBoardPersistentHandler {
             // 4.2.持久化
             pointsBoardService.saveBatch(boardList);
             // 5.翻页
-            pageNo++;
+            pageNo+=total;
         }
         // 任务结束，移除动态表名
         TableInfoContext.remove();
+    }
+
+    @XxlJob("clearPointsBoardFromRedis")
+    public void clearPointsBoardFromRedis(){
+        // 1.获取上月时间
+        LocalDateTime time = LocalDateTime.now().minusMonths(1);
+        // 2.计算key
+        String key = RedisConstants.POINTS_BOARD_KEY_PREFIX + time.format(DateTimeFormatter.ofPattern("yyyyMM"));
+        // 3.删除
+        redisTemplate.unlink(key);
     }
 }
