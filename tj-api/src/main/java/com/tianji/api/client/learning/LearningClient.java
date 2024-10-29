@@ -32,5 +32,4 @@ public interface LearningClient {
      */
     @GetMapping("/learning-records/course/{courseId}")
     LearningLessonDTO queryLearningRecordByCourse(@PathVariable("courseId") Long courseId);
-
 }
