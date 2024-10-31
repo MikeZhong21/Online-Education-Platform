@@ -2,7 +2,7 @@
 
 ## Project Description
 
-It is an online vocational skills training platform that focuses on selling various skill training courses. It provides rich learning support features and interactive functionalities to enhance the learning atmosphere and increase user engagement.
+It is an online education platform that focuses on selling and offering various courses. It provides rich learning support features and interactive functionalities to enhance the learning atmosphere and increase user engagement.
 
 ## Technology Stack
 
