@@ -7,19 +7,24 @@ import com.tianji.common.exceptions.BizIllegalException;
 import com.tianji.common.utils.BeanUtils;
 import com.tianji.common.utils.CollUtils;
 import com.tianji.common.utils.StringUtils;
+import com.tianji.common.utils.UserContext;
 import com.tianji.promotion.domain.dto.CouponFormDTO;
 import com.tianji.promotion.domain.dto.CouponIssueFormDTO;
 import com.tianji.promotion.domain.po.Coupon;
 import com.tianji.promotion.domain.po.CouponScope;
+import com.tianji.promotion.domain.po.UserCoupon;
 import com.tianji.promotion.domain.query.CouponQuery;
 import com.tianji.promotion.domain.vo.CouponPageVO;
+import com.tianji.promotion.domain.vo.CouponVO;
 import com.tianji.promotion.enums.CouponStatus;
 import com.tianji.promotion.enums.ObtainType;
+import com.tianji.promotion.enums.UserCouponStatus;
 import com.tianji.promotion.mapper.CouponMapper;
 import com.tianji.promotion.service.ICouponScopeService;
 import com.tianji.promotion.service.ICouponService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.tianji.promotion.service.IExchangeCodeService;
+import com.tianji.promotion.service.IUserCouponService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +32,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import com.tianji.promotion.enums.CouponStatus.*;
 
 /**
  * <p>
@@ -43,6 +51,8 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
     private final ICouponScopeService couponScopeService;
 
     private final IExchangeCodeService codeService;
+
+    private final IUserCouponService userCouponService;
 
     @Override
     public void saveCoupon(CouponFormDTO couponFormDTO) {
@@ -124,5 +134,47 @@ public class CouponServiceImpl extends ServiceImpl<CouponMapper, Coupon> impleme
             coupon.setIssueEndTime(c.getIssueEndTime());
             codeService.asyncGenerateCode(coupon);
         }
+    }
+
+
+    @Override
+    public List<CouponVO> queryIssuingCoupons() {
+
+        List<Coupon> coupons = lambdaQuery()
+                .eq(Coupon::getStatus, CouponStatus.ISSUING)
+                .eq(Coupon::getObtainWay, ObtainType.PUBLIC)
+                .list();
+        if (CollUtils.isEmpty(coupons)) {
+            return CollUtils.emptyList();
+        }
+
+        List<Long> couponIds = coupons.stream().map(Coupon::getId).collect(Collectors.toList());
+
+        List<UserCoupon> userCoupons = userCouponService.lambdaQuery()
+                .eq(UserCoupon::getUserId, UserContext.getUser())
+                .in(UserCoupon::getCouponId, couponIds)
+                .list();
+
+        Map<Long, Long> issuedMap = userCoupons.stream()
+                .collect(Collectors.groupingBy(UserCoupon::getCouponId, Collectors.counting()));
+
+        Map<Long, Long> unusedMap = userCoupons.stream()
+                .filter(uc -> uc.getStatus() == UserCouponStatus.UNUSED)
+                .collect(Collectors.groupingBy(UserCoupon::getCouponId, Collectors.counting()));
+
+        List<CouponVO> list = new ArrayList<>(coupons.size());
+        for (Coupon c : coupons) {
+
+            CouponVO vo = BeanUtils.copyBean(c, CouponVO.class);
+            list.add(vo);
+
+            vo.setAvailable(
+                    c.getIssueNum() < c.getTotalNum()
+                            && issuedMap.getOrDefault(c.getId(), 0L) < c.getUserLimit()
+            );
+
+            vo.setReceived(unusedMap.getOrDefault(c.getId(),  0L) > 0);
+        }
+        return list;
     }
 }
