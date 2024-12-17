@@ -15,6 +15,8 @@ import com.tianji.promotion.mapper.UserCouponMapper;
 import com.tianji.promotion.service.IExchangeCodeService;
 import com.tianji.promotion.service.IUserCouponService;
 import com.tianji.promotion.utils.CodeUtil;
+import com.tianji.promotion.utils.MyLock;
+import com.tianji.promotion.utils.MyLockType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.stereotype.Service;
@@ -48,13 +50,18 @@ public class UserCouponServiceImpl extends ServiceImpl<UserCouponMapper, UserCou
         }
         Long userId = UserContext.getUser();
 
-        synchronized (userId.toString().intern()){
-            IUserCouponService userCouponService = (IUserCouponService) AopContext.currentProxy();
+        //Lock for single instance
+//        synchronized (userId.toString().intern()){
+//            IUserCouponService userCouponService = (IUserCouponService) AopContext.currentProxy();
+//            userCouponService.checkAndCreateUserCoupon(coupon, userId, null);
+//        }
+
+        IUserCouponService userCouponService = (IUserCouponService) AopContext.currentProxy();
             userCouponService.checkAndCreateUserCoupon(coupon, userId, null);
-        }
     }
 
     @Transactional
+    @MyLock(name="lock:coupon:#{userId}", locktype = MyLockType.RE_ENTRANT_LOCK)
     public void checkAndCreateUserCoupon(Coupon coupon, Long userId, Long serialNum){
 
         // 1.校验每人限领数量
